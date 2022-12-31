@@ -1,14 +1,18 @@
+use quick_xml::events::{BytesEnd, BytesStart, Event};
+use quick_xml::reader::Reader;
+use quick_xml::Writer;
+use serde_derive::{Deserialize, Serialize};
 use std::fs;
 use std::fs::File;
 use std::io::prelude::*;
-
+use std::io::Cursor;
 use std::str;
 
-use quick_xml::events::{BytesEnd, BytesStart, Event};
-use quick_xml::reader::Reader;
-use quick_xml::writer::Writer;
-use std::io::Cursor;
-
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+struct DistanceMeters {
+    #[serde(rename = "$text")]
+    pub body: String,
+}
 fn main() {
     println!("Hello, world!");
 
@@ -30,6 +34,8 @@ fn main() {
 
     // States
     let mut ignore: bool = false;
+    let mut trackpoint: bool = false;
+    let mut distanceMeters:bool = false;
 
     loop {
         match reader.read_event() {
@@ -40,11 +46,37 @@ fn main() {
                 ignore = false;
             }
 
+            Ok(Event::Start(e)) if e.name().as_ref() == b"Trackpoint" => {
+                trackpoint = true;
+                assert!(writer.write_event(Event::Start(e.into_owned())).is_ok());
+            }
+            Ok(Event::End(e)) if e.name().as_ref() == b"Trackpoint" => {
+                trackpoint = false;
+                assert!(writer.write_event(Event::End(e.into_owned())).is_ok());
+            }
+
             Ok(Event::Start(e)) if e.name().as_ref() == b"DistanceMeters" => {
-                ignore = true;
+                if trackpoint {
+                    // ignore
+                    distanceMeters = true;
+                } else {
+                    assert!(writer.write_event(Event::Start(e.into_owned())).is_ok());
+                }
             }
             Ok(Event::End(e)) if e.name().as_ref() == b"DistanceMeters" => {
-                ignore = false;
+                if trackpoint {
+                    // ignore
+                    distanceMeters = false;
+                } else {
+                    assert!(writer.write_event(Event::End(e.into_owned())).is_ok());
+                }
+            }
+            Ok(Event::Text(e)) => {
+                if (distanceMeters || ignore){
+                    // skip
+                }else {
+                    assert!(writer.write_event(Event::Text(e.into_owned())).is_ok());
+                }
             }
             Ok(Event::Eof) => break,
 
