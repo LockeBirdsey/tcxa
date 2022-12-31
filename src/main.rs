@@ -30,7 +30,6 @@ fn main() {
 
     // States
     let mut ignore: bool = false;
-    let mut trackpoint: bool = false;
 
     loop {
         match reader.read_event() {
@@ -50,7 +49,6 @@ fn main() {
             Ok(Event::Eof) => break,
 
             Ok(e) => {
-                if trackpoint {}
                 if !ignore {
                     assert!(writer.write_event(e).is_ok())
                 }
