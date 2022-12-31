@@ -1,3 +1,4 @@
+use clap::Parser;
 use quick_xml::events::{BytesText, Event};
 use quick_xml::reader::Reader;
 use quick_xml::Writer;
@@ -8,21 +9,50 @@ use std::io::prelude::*;
 use std::io::Cursor;
 use std::str;
 
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// Path to input file
+    #[arg(short, long)]
+    input_path: std::path::PathBuf,
+
+    /// Path to output file
+    #[arg(short, long)]
+    output_path: std::path::PathBuf,
+
+    /// Manually inputted distance
+    #[arg(short, long, default_value_t = 0)]
+    distance: u32,
+
+    /// Calculate total distance
+    #[arg(short, long, default_value_t = false)]
+    sum_distance: bool,
+
+    /// calculate mean heart rate
+    #[arg(short, long, default_value_t = false)]
+    mhr: bool,
+}
+
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 struct DistanceMeters {
     #[serde(rename = "$text")]
     pub body: String,
 }
 fn main() {
-    println!("Hello, world!");
+    let args = Args::parse();
 
-    // dev vars
-    let dist = 7512;
+    let dist = args.distance;
+
+    // TODO validate input and output files
+    let outpath = match args.output_path.to_str() {
+        Some(x) => x,
+        None => panic!("No output path specified")
+    };
 
     // load file
-    let file_path = "test-mini.tcx";
-    let mut file = match File::create("test-mini-out.tcx") {
-        Err(why) => panic!("couldn't create {}: {}", "test-mini-out.tcx", why),
+    let file_path = args.input_path;
+    let mut file = match File::create(outpath) {
+        Err(why) => panic!("couldn't create {}: {}", outpath, why),
         Ok(file) => file,
     };
     let xml = fs::read_to_string(file_path).expect("File file_path could not be read");
@@ -95,7 +125,7 @@ fn main() {
         }
     }
     let result = writer.into_inner().into_inner();
-    
+
     match file.write_all(result.as_ref()) {
         Err(why) => panic!("Couldn't write {}", why),
         Ok(_) => println!("Written successfully"),
