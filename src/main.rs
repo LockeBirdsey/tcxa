@@ -1,4 +1,4 @@
-use quick_xml::events::{BytesEnd, BytesStart, Event};
+use quick_xml::events::{BytesText, Event};
 use quick_xml::reader::Reader;
 use quick_xml::Writer;
 use serde_derive::{Deserialize, Serialize};
@@ -35,7 +35,7 @@ fn main() {
     // States
     let mut ignore: bool = false;
     let mut trackpoint: bool = false;
-    let mut distanceMeters:bool = false;
+    let mut distance_meters: bool = false;
 
     loop {
         match reader.read_event() {
@@ -58,23 +58,29 @@ fn main() {
             Ok(Event::Start(e)) if e.name().as_ref() == b"DistanceMeters" => {
                 if trackpoint {
                     // ignore
-                    distanceMeters = true;
+                    ignore = true;
                 } else {
+                    // new val
+                    distance_meters = true;
+                    let dstr = dist.to_string(); // lazy owning
+                    let x = BytesText::new(&dstr);
                     assert!(writer.write_event(Event::Start(e.into_owned())).is_ok());
+                    assert!(writer.write_event(Event::Text(x)).is_ok());
                 }
             }
             Ok(Event::End(e)) if e.name().as_ref() == b"DistanceMeters" => {
                 if trackpoint {
                     // ignore
-                    distanceMeters = false;
+                    ignore = false;
                 } else {
+                    distance_meters = false;
                     assert!(writer.write_event(Event::End(e.into_owned())).is_ok());
                 }
             }
             Ok(Event::Text(e)) => {
-                if (distanceMeters || ignore){
+                if distance_meters || ignore {
                     // skip
-                }else {
+                } else {
                     assert!(writer.write_event(Event::Text(e.into_owned())).is_ok());
                 }
             }
@@ -89,13 +95,16 @@ fn main() {
         }
     }
     let result = writer.into_inner().into_inner();
-    let _s = match str::from_utf8(result.as_ref()) {
-        Ok(v) => v,
-        Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
-    };
+    
     match file.write_all(result.as_ref()) {
         Err(why) => panic!("Couldn't write {}", why),
         Ok(_) => println!("Written successfully"),
     }
+
+    // if you want it to stdout
+    let _s = match str::from_utf8(result.as_ref()) {
+        Ok(v) => v,
+        Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
+    };
     // println!("result: {}", s);
 }
