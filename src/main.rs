@@ -1,3 +1,5 @@
+mod api;
+
 use clap::Parser;
 use quick_xml::events::{BytesText, Event};
 use quick_xml::reader::Reader;
