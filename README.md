@@ -1,7 +1,7 @@
 # tcxa: TCX Anonymiser
 
 # DEAD
-Replaced by (https://github.com/LockeBirdsey/gotcxa)[GOTCXA] because it was nicer and junk
+Replaced by [GOTCXA](https://github.com/LockeBirdsey/gotcxa) because it was nicer and junk
 
 ## Why/What?
 
