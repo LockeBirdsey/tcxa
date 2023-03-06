@@ -1,5 +1,8 @@
 # tcxa: TCX Anonymiser
 
+# DEAD
+Replaced by (https://github.com/LockeBirdsey/gotcxa)[GOTCXA] because it was nicer and junk
+
 ## Why/What?
 
 I got fed up with Fitbit serving broken TCX files when set to "Spinning" only to find out that "Bike" mode forced GPS mode on. Of course, on an exercise bike, the segments distance will sum to 0, which Strava will use for its distance calculation. 
